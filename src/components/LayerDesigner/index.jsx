@@ -39,9 +39,18 @@ function NumInput({ value, onChange, min, max, step, unit }) {
         min={min}
         max={max}
         step={step || 0.1}
-        className="flex-1 bg-bg border border-border rounded px-2 py-1 text-sm text-text focus:border-accent focus:outline-none"
+        className="w-full bg-bg border border-border rounded px-2 py-1 text-sm text-text focus:border-accent focus:outline-none"
       />
-      {unit && <span className="text-xs text-text-dim w-8 shrink-0">{unit}</span>}
+      {unit && <span className="text-xs text-text-dim shrink-0">{unit}</span>}
+    </div>
+  );
+}
+
+function RowInput({ label, children }) {
+  return (
+    <div className="flex items-center justify-between py-1">
+      <span className="text-xs text-text-dim">{label}</span>
+      {children}
     </div>
   );
 }
@@ -78,36 +87,22 @@ export default function LayerDesigner() {
 
       {open && <>
 
-      <div className="grid grid-cols-2 gap-3 mt-2">
-        <div>
-          <label className="block text-xs text-text-dim mb-1">{t.layers}</label>
-          <NumInput
-            value={layerConfig.layers}
-            onChange={(v) => updateLayerConfig({ layers: Math.min(6, Math.max(1, Math.round(v))) })}
-            min={1}
-            max={6}
-            step={1}
-          />
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <div className="bg-panel-light border border-border rounded px-2 py-1.5">
+          <div className="text-xs text-text-dim mb-1">{t.layers}</div>
+          <NumInput value={layerConfig.layers} onChange={(v) => updateLayerConfig({ layers: Math.min(6, Math.max(1, Math.round(v))) })} min={1} max={6} step={1} />
         </div>
-        <div>
-          <label className="block text-xs text-text-dim mb-1">{t.bracketThickness}</label>
-          <NumInput
-            value={layerConfig.bracketThickness}
-            onChange={(v) => updateLayerConfig({ bracketThickness: Math.max(0, v) })}
-            min={0}
-            step={0.5}
-            unit="mm"
-          />
+        <div className="bg-panel-light border border-border rounded px-2 py-1.5">
+          <div className="text-xs text-text-dim mb-1">{t.bracketThickness}</div>
+          <NumInput value={layerConfig.bracketThickness} onChange={(v) => updateLayerConfig({ bracketThickness: Math.max(0, v) })} min={0} step={0.5} unit="mm" />
         </div>
-        <div>
-          <label className="block text-xs text-text-dim mb-1">{t.cellGap}</label>
-          <NumInput
-            value={layerConfig.cellGap}
-            onChange={(v) => updateLayerConfig({ cellGap: Math.max(0, v) })}
-            min={0}
-            step={0.5}
-            unit="mm"
-          />
+        <div className="bg-panel-light border border-border rounded px-2 py-1.5">
+          <div className="text-xs text-text-dim mb-1">{language === 'tr' ? 'Katman Boşluğu' : 'Layer Gap'}</div>
+          <NumInput value={layerConfig.layerGap ?? 4} onChange={(v) => updateLayerConfig({ layerGap: Math.max(0, v) })} min={0} step={0.5} unit="mm" />
+        </div>
+        <div className="bg-panel-light border border-border rounded px-2 py-1.5">
+          <div className="text-xs text-text-dim mb-1">{t.cellGap}</div>
+          <NumInput value={layerConfig.cellGap} onChange={(v) => updateLayerConfig({ cellGap: Math.max(0, v) })} min={0} step={0.5} unit="mm" />
         </div>
       </div>
 
@@ -142,63 +137,6 @@ export default function LayerDesigner() {
         </div>
       )}
 
-      {/* Dimensions display */}
-      {dimensions && (
-        <>
-          <SectionLabel>{t.calculatedDimensions}</SectionLabel>
-
-          <div className="bg-panel-light rounded border border-border p-3 space-y-0.5">
-            <div className="text-xs text-accent font-semibold mb-2">{t.perLayerLabel}</div>
-            <DimValue label={t.width} valueMm={dimensions.layerWidth} unitSystem={unitSystem} />
-            <DimValue label={t.depth} valueMm={dimensions.layerDepth} unitSystem={unitSystem} />
-            <DimValue label={t.height} valueMm={dimensions.layerHeight} unitSystem={unitSystem} />
-
-            <div className="border-t border-border my-2" />
-
-            <div className="text-xs text-accent font-semibold mb-2">{t.withoutBracket}</div>
-            <DimValue label="W" valueMm={dimensions.withoutBracket.width} unitSystem={unitSystem} />
-            <DimValue label="D" valueMm={dimensions.withoutBracket.depth} unitSystem={unitSystem} />
-            <DimValue label="H" valueMm={dimensions.withoutBracket.height} unitSystem={unitSystem} />
-
-            {layerConfig.bracketThickness > 0 && (
-              <>
-                <div className="border-t border-border my-2" />
-                <div className="text-xs text-accent font-semibold mb-2">{t.withBracket}</div>
-                <DimValue label="W" valueMm={dimensions.withBracket.width} unitSystem={unitSystem} />
-                <DimValue label="D" valueMm={dimensions.withBracket.depth} unitSystem={unitSystem} />
-                <DimValue label="H" valueMm={dimensions.withBracket.height} unitSystem={unitSystem} />
-              </>
-            )}
-
-            <div className="border-t border-border my-2" />
-
-            <div className="flex justify-between text-xs py-0.5">
-              <span className="text-text-dim">{t.volume}</span>
-              <span className="font-mono text-text">{dimensions.volumeL.toFixed(3)} L</span>
-            </div>
-
-            {/* Fill ratio bar */}
-            <div className="mt-2">
-              <div className="flex justify-between text-xs mb-1">
-                <span className="text-text-dim">{t.fillRatio}</span>
-                <span className="font-mono text-text">{dimensions.fillRatio.toFixed(1)}%</span>
-              </div>
-              <div className="h-1.5 bg-bg rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{
-                    width: `${dimensions.fillRatio}%`,
-                    backgroundColor:
-                      dimensions.fillRatio > 80 ? '#ef4444'
-                      : dimensions.fillRatio > 60 ? '#f59e0b'
-                      : '#00d4ff',
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        </>
-      )}
 
       </>}
     </div>

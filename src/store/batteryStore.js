@@ -36,6 +36,7 @@ const DEFAULT_LAYER_CONFIG = {
   layers: 2,
   bracketThickness: 9,
   cellGap: 4,
+  layerGap: 4,
   orientation: 'vertical', // 'vertical' | 'horizontal'
 };
 
@@ -77,14 +78,16 @@ function computeResults(cell, packConfig, layerConfig, calcMode, spConfig) {
       layerConfig.layers,
       layerConfig.bracketThickness,
       layerConfig.cellGap,
-      layerConfig.orientation
+      layerConfig.orientation,
+      layerConfig.layerGap ?? 0
     );
   } else {
     dimensions = calculatePrismaticDimensions(
       S, P, cell,
       layerConfig.layers,
       layerConfig.bracketThickness,
-      layerConfig.cellGap
+      layerConfig.cellGap,
+      layerConfig.layerGap ?? 0
     );
   }
 

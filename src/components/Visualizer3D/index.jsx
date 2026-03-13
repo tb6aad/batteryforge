@@ -106,7 +106,7 @@ function CellSlotHolder({ cellR, wall, bt, clipSize }) {
 // ─── Bracket holder — places CellSlotHolder at each layer boundary ────────────
 function BracketHolder({ electrical, dimensions, layerConfig, selectedCell, explodeOffset }) {
   const { S, P } = electrical;
-  const { layers, bracketThickness: bt, cellGap } = layerConfig;
+  const { layers, bracketThickness: bt, cellGap, layerGap = 4 } = layerConfig;
   if (bt <= 0) return null;
 
   const perLayerP = dimensions.perLayerP || Math.ceil(P / layers);
@@ -132,14 +132,13 @@ function BracketHolder({ electrical, dimensions, layerConfig, selectedCell, expl
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [S, perLayerP, cellW, cellL, cellGap]);
 
-  // Y positions: bottom plate / inter-layer plates / top plate
-  const plateYs = [
-    -cellH / 2 - bt / 2,
-    ...Array.from({ length: layers - 1 }, (_, i) =>
-      i * (cellH + bt + explodeOffset) + cellH / 2 + bt / 2
-    ),
-    (layers - 1) * (cellH + bt + explodeOffset) + cellH / 2 + bt / 2,
-  ];
+  // 2 rings per layer: bottom end + top end of each cell (overlapping bt/2 inside)
+  const plateYs = [];
+  for (let li = 0; li < layers; li++) {
+    const layerY = li * (cellH + layerGap + explodeOffset);
+    plateYs.push(layerY - cellH / 2 + bt / 2); // bottom ring
+    plateYs.push(layerY + cellH / 2 - bt / 2); // top ring
+  }
 
   return (
     <>
@@ -198,7 +197,7 @@ function BatteryScene() {
   const cells = useMemo(() => {
     if (!electrical || !dimensions || !selectedCell) return [];
     const { S, P } = electrical;
-    const { layers, bracketThickness: bt, cellGap } = layerConfig;
+    const { layers, cellGap, layerGap = 4, bracketThickness: bt } = layerConfig;
     const perLayerP = dimensions.perLayerP || Math.ceil(P / layers);
     const isVert = layerConfig.orientation === 'vertical';
     const items = [];
@@ -217,17 +216,17 @@ function BatteryScene() {
             if (isVert) {
               x = pi * (selectedCell.diameter + cellGap) - (count * (selectedCell.diameter + cellGap) - cellGap) / 2 + r;
               z = si * (selectedCell.diameter + cellGap) - (S     * (selectedCell.diameter + cellGap) - cellGap) / 2 + r;
-              y = li * (h + bt + explodeOffset);
+              y = li * (h + layerGap + explodeOffset);
             } else {
               x = pi * (h + cellGap) - (count * (h + cellGap) - cellGap) / 2 + h / 2;
               z = si * (selectedCell.diameter + cellGap) - (S * (selectedCell.diameter + cellGap) - cellGap) / 2 + r;
-              y = li * (selectedCell.diameter + bt + explodeOffset);
+              y = li * (selectedCell.diameter + layerGap + explodeOffset);
             }
           } else {
             const { length: cl, width: cw, thickness: ct } = selectedCell;
             x = pi * (cw + cellGap) - (count * (cw + cellGap) - cellGap) / 2 + cw / 2;
             z = si * (cl + cellGap) - (S * (cl + cellGap) - cellGap) / 2 + cl / 2;
-            y = li * (ct + bt + explodeOffset);
+            y = li * (ct + layerGap + explodeOffset);
           }
           items.push({
             key: `${li}-${si}-${pi}`,
@@ -244,9 +243,9 @@ function BatteryScene() {
   // Vertically center the whole assembly
   const groupOffsetY = useMemo(() => {
     if (!electrical || !selectedCell) return 0;
-    const { layers, bracketThickness: bt } = layerConfig;
+    const { layers, layerGap = 4 } = layerConfig;
     const cellH = selectedCell.format === 'cylindrical' ? selectedCell.height : selectedCell.thickness;
-    return -((layers - 1) * (cellH + bt + explodeOffset)) / 2;
+    return -((layers - 1) * (cellH + layerGap + explodeOffset)) / 2;
   }, [electrical, selectedCell, layerConfig, explodeOffset]);
 
   if (!cells.length || !selectedCell) return null;

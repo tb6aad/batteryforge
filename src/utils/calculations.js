@@ -129,7 +129,7 @@ export function calculatePackElectrical(S, P, cell) {
 /**
  * Calculate physical dimensions for cylindrical cells
  */
-export function calculateCylindricalDimensions(S, P, cell, layers, bracketThickness, cellGap, orientation) {
+export function calculateCylindricalDimensions(S, P, cell, layers, bracketThickness, cellGap, orientation, layerGap = 0) {
   const isHorizontal = orientation === 'horizontal';
 
   let perLayerP = Math.ceil(P / layers);
@@ -153,11 +153,13 @@ export function calculateCylindricalDimensions(S, P, cell, layers, bracketThickn
     layerHeight = cell.diameter;
   }
 
-  const totalHeight = layers * layerHeight + (layers - 1) * bracketThickness;
+  const gap = layerGap > 0 ? layerGap : bracketThickness;
+  const totalHeight = layers * layerHeight + (layers - 1) * gap;
 
-  const withBracketWidth = layerWidth + bracketThickness * 2;
-  const withBracketDepth = layerDepth + bracketThickness * 2;
-  const withBracketHeight = totalHeight + bracketThickness * 2;
+  const wall = Math.max(2.2, Math.min(cell.diameter * 0.055, 5.5));
+  const withBracketWidth = layerWidth + wall * 2;
+  const withBracketDepth = layerDepth + wall * 2;
+  const withBracketHeight = totalHeight + wall * 2;
 
   const volumeL = (withBracketWidth * withBracketDepth * withBracketHeight) / 1e6;
   const cellVolume = Math.PI * Math.pow(cell.diameter / 2, 2) * cell.height;
@@ -189,14 +191,15 @@ export function calculateCylindricalDimensions(S, P, cell, layers, bracketThickn
 /**
  * Calculate physical dimensions for prismatic/pouch cells
  */
-export function calculatePrismaticDimensions(S, P, cell, layers, bracketThickness, cellGap) {
+export function calculatePrismaticDimensions(S, P, cell, layers, bracketThickness, cellGap, layerGap = 0) {
   const perLayerP = Math.ceil(P / layers);
 
   const layerWidth = perLayerP * cell.width + (perLayerP - 1) * cellGap;
   const layerDepth = S * cell.length + (S - 1) * cellGap;
   const layerHeight = cell.thickness;
 
-  const totalHeight = layers * layerHeight + (layers - 1) * bracketThickness;
+  const gap = layerGap > 0 ? layerGap : bracketThickness;
+  const totalHeight = layers * layerHeight + (layers - 1) * gap;
 
   const withBracketWidth = layerWidth + bracketThickness * 2;
   const withBracketDepth = layerDepth + bracketThickness * 2;
